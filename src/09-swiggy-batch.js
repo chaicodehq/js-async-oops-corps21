@@ -89,24 +89,58 @@
  */
 export function prepareOrder(item, prepTime) {
   // Your code here
+  return new Promise((resolve, reject) => {
+    if (typeof item !== "string" || item.length === 0) {
+      reject(new Error("Item name required!"));
+    } else if (typeof prepTime !== "number" || prepTime <= 0) {
+      reject(new Error("Invalid prep time!"));
+    } else {
+      setTimeout(() => resolve({ item, ready: true, prepTime }), prepTime);
+    }
+  });
 }
 
 export function prepareBatch(items) {
   // Your code here
+  return Promise.all(
+    items.map(({ name, prepTime }) => prepareOrder(name, prepTime)),
+  );
 }
 
 export function getFirstReady(items) {
   // Your code here
+  if(items.length === 0)
+  return Promise.reject(new Error("No items to prepare!"))
+  
+  return Promise.race(items.map(({ name, prepTime }) => prepareOrder(name, prepTime)));
 }
 
 export function prepareSafeBatch(items) {
   // Your code here
+  return Promise.allSettled(items.map(({name, prepTime}) => prepareOrder(name, prepTime))).then(results => results.map(result => {
+    if(result.reason instanceof Error) result.reason = result.reason.message
+    return result
+  }))
 }
 
 export function deliverWithTimeout(orderPromise, timeoutMs) {
   // Your code here
+  return Promise.race([orderPromise, new Promise((_resolve, reject) => {
+    if(timeoutMs <= 0) reject(new Error("Invalid timeout!"))
+    else setTimeout(() => reject(new Error("Delivery timeout!")), timeoutMs)
+  })])
 }
 
 export function batchWithRetry(items, maxRetries) {
   // Your code here
+  let localMaxRetries = maxRetries;
+  do {
+    try {
+      return prepareBatch(items)
+    } catch(error) {
+      localMaxRetries--
+      if(localMaxRetries === 0) throw error
+    }
+  }
+  while(localMaxRetries > 0)
 }

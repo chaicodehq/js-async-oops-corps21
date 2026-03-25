@@ -77,29 +77,86 @@
 export class DabbaService {
   constructor(serviceName, area) {
     // Your code here
+    this.serviceName = serviceName
+    this.area = area
+    this.customers = []
+    this._nextId = 1
   }
 
   addCustomer(name, address, mealPreference) {
     // Your code here
+    if(!["veg", "nonveg", "jain"].some((pref) => pref === mealPreference)) return null
+    if(this.customers.find(customer => customer.name === name)) return null
+    const customer = {
+      name,
+      address,
+      id: this._nextId++,
+      mealPreference,
+      active: true,
+      delivered: false
+    }
+    this.customers.push(customer)
+    return customer
   }
 
   removeCustomer(name) {
     // Your code here
+    const customer = this.customers.find(customer => customer.name === name)
+    if(!customer || !customer.active) return false
+    customer.active = false
+    return true;
   }
 
   createDeliveryBatch() {
     // Your code here
+    const activeCustomers = this.customers.filter(customer => customer.active)
+
+    return activeCustomers.reduce((acc,customer) => {
+      customer.delivered = false
+
+      const delivery = {
+        customerId: customer.id,
+        name: customer.name,
+        address: customer.address,
+        mealPreference: customer.mealPreference,
+        batchTime: new Date().toISOString()
+      }
+
+      acc.push(delivery)
+      return acc
+    }, [])
   }
 
   markDelivered(customerId) {
     // Your code here
+    const customer = this.customers.find(customer => customer.id === customerId)
+    if(!customer || !customer.active) return false
+    customer.delivered = true;
+    return true
   }
 
   getDailyReport() {
     // Your code here
+    const activeCustomers = this.customers.filter(customer => customer.active)
+    return activeCustomers.reduce((acc,customer) => {
+
+      acc.totalCustomers++
+      customer.delivered ? acc.delivered++ : acc.pending++
+      acc.mealBreakdown[customer.mealPreference]++
+
+      return acc
+    }, {
+      totalCustomers: 0,
+      delivered: 0,
+      pending: 0,
+      mealBreakdown: {veg: 0, nonveg: 0, jain: 0}
+    })
   }
 
   getCustomer(name) {
     // Your code here
+    const customer = this.customers.find(customer => customer.name === name)
+    if(!customer) return null
+    return customer
   }
 }

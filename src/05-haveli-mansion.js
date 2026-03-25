@@ -93,33 +93,104 @@ export class HaveliSecurity {
 
   constructor(haveliName, passcode, maxResidents) {
     // Your code here
+    this.haveliName = haveliName
+    this.#passcode = passcode
+    this.#residents = []
+    this.#accessLog = []
+    this.#maxResidents = maxResidents 
   }
 
   addResident(name, role, passcode) {
     // Your code here
+    const result = {success: false, message: ""}
+
+    if(passcode !== this.#passcode) {
+      result.message = "Galat passcode!"
+    } else if(!["malik", "naukar", "mehmaan"].some(r => r === role.toLowerCase())) {
+      result.message = "Invalid role!"
+    } else if(this.#residents.find(resident => resident.name === name)) {
+      result.message = "Already a resident!"  
+    } else if(this.#residents.length >= this.#maxResidents) {
+      result.message = "Haveli full hai!"
+    } else {
+
+      const resident = {
+        name,
+        role,
+        addedAt: new Date().toISOString()
+      }
+
+      this.#residents.push(resident)
+
+      result.success = true
+      result.message = `${name} ab haveli ka ${role} hai!`
+    }
+    
+    return result
   }
 
   removeResident(name, passcode) {
     // Your code here
+    const result = {success: false, message: ""}
+
+    if(passcode !== this.#passcode) {
+      result.message = "Galat passcode!"
+    } else if(!this.#residents.find(resident => resident.name === name)) {
+      result.message = "Resident nahi mila!"
+    } else {
+      this.#residents = this.#residents.filter(resident => resident.name !== name)
+      result.success = true
+      result.message = `${name} ko haveli se nikal diya!`
+    }
+    
+    return result
   }
 
   verifyAccess(name) {
     // Your code here
+    if(this.#residents.find(resident => resident.name === name)) {
+      this.#accessLog.push({name, time: new Date().toISOString(), allowed: true})
+      return {allowed: true, message: `Swagat hai ${name}!`}
+    } else {
+      this.#accessLog.push({name, time: new Date().toISOString(), allowed: false})
+      return {allowed: false, message: "Aapka entry allowed nahi hai!"}
+    }
   }
 
   getAccessLog(passcode) {
     // Your code here
+     if(passcode === this.#passcode) {
+      return [...this.#accessLog]
+    }
+
+    return null
   }
 
   changePasscode(oldPasscode, newPasscode) {
     // Your code here
+    const result = {success: false, message: ""}
+    if(oldPasscode === this.#passcode) {
+      if(newPasscode.length >= 4) {
+        this.#passcode = newPasscode
+        result.success = true
+        result.message = "Passcode badal diya!"
+      } else {
+        result.message = "Naya passcode bahut chhota hai!"
+      }
+    } else {
+      result.message = "Purana passcode galat hai!"
+    }
+
+    return result
   }
 
   getResidentCount() {
     // Your code here
+    return this.#residents.length
   }
 
   isResident(name) {
     // Your code here
+    return this.#residents.find(resident => resident.name === name) ? true : false
   }
 }
